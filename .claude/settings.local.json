@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(rd /s /q \"C:\\Users\\USER\\BlogTwin\\TempProject\")",
+      "Bash(npx react-native start --reset-cache)",
+      "Bash(taskkill:*)",
+      "Bash(java:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git init:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

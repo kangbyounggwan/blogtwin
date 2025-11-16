@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 255, 255, 255;
+    --background-end-rgb: 255, 255, 255;
+  }
+
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgb(var(--background-end-rgb))
+      )
+      rgb(var(--background-start-rgb));
+  }
+}
+
+@layer components {
+  /* 모바일 컨테이너 - 네이티브 앱처럼 보이게 */
+  .mobile-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* 네이티브 앱 스타일 버튼 */
+  .btn-primary {
+    @apply bg-primary-500 text-white px-6 py-3 rounded-md font-medium
+           shadow-md hover:bg-primary-600 active:scale-95
+           transition-all duration-150;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-500 text-white px-6 py-3 rounded-md font-medium
+           shadow-md hover:bg-secondary-600 active:scale-95
+           transition-all duration-150;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary-500 text-primary-500 px-6 py-3
+           rounded-md font-medium hover:bg-primary-50 active:scale-95
+           transition-all duration-150;
+  }
+
+  /* 네이티브 앱 스타일 카드 */
+  .card {
+    @apply bg-white rounded-lg shadow-md p-4 border border-gray-100;
+  }
+
+  .card-elevated {
+    @apply bg-white rounded-lg shadow-lg p-4;
+  }
+
+  /* 네이티브 앱 스타일 입력 필드 */
+  .input {
+    @apply w-full px-4 py-3 rounded-md border border-gray-300
+           focus:outline-none focus:ring-2 focus:ring-primary-500
+           focus:border-transparent transition-all;
+  }
+
+  /* 스크린 패딩 */
+  .screen-padding {
+    @apply px-4 py-6;
+  }
+
+  /* 헤더 스타일 */
+  .app-header {
+    @apply sticky top-0 bg-white border-b border-gray-200 px-4 py-3
+           flex items-center justify-between shadow-sm z-10;
+  }
+
+  /* 하단 네비게이션 */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200
+           flex items-center justify-around py-2 shadow-lg z-50;
+  }
+
+  /* 터치 피드백 */
+  .touchable {
+    @apply active:bg-gray-100 transition-colors duration-150;
+  }
+
+  /* 리스트 아이템 */
+  .list-item {
+    @apply flex items-center justify-between py-3 px-4
+           border-b border-gray-100 last:border-b-0
+           active:bg-gray-50 transition-colors;
+  }
+}
+
+@layer utilities {
+  /* 애니메이션 */
+  @keyframes progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+
+  .animate-progress {
+    animation: progress 1.5s ease-in-out infinite;
+  }
+
+  /* 스크롤 숨김 */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Safe area 지원 (iOS) */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
