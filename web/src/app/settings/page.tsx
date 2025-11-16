@@ -29,8 +29,8 @@ export default function SettingsPage() {
               👤
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">데모 사용자</h3>
-              <p className="text-sm text-gray-500">demo@blogtwin.com</p>
+              <h3 className="font-semibold text-gray-900">사용자</h3>
+              <p className="text-sm text-gray-500">로그인 후 정보가 표시됩니다</p>
             </div>
           </div>
         </Card>

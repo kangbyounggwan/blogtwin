@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
+const NAVER_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
+const NAVER_REDIRECT_URI = typeof window !== 'undefined'
+  ? `${window.location.origin}/auth/callback`
+  : '';
+
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -11,10 +16,20 @@ export default function LoginPage() {
   const handleNaverLogin = async () => {
     setLoading(true);
 
-    // Demo mode - just redirect to dashboard
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1000);
+    // Check if Naver API is configured
+    if (!NAVER_CLIENT_ID) {
+      alert('네이버 OAuth가 설정되지 않았습니다.\n.env.local 파일에 NEXT_PUBLIC_NAVER_CLIENT_ID와 NAVER_CLIENT_SECRET을 설정하세요.');
+      setLoading(false);
+      return;
+    }
+
+    // Real Naver OAuth
+    const state = Math.random().toString(36).substring(7);
+    sessionStorage.setItem('oauth_state', state);
+
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}&state=${state}`;
+
+    window.location.href = naverAuthUrl;
   };
 
   return (
@@ -36,12 +51,17 @@ export default function LoginPage() {
             AI가 당신의 스타일로 블로그 글을 작성합니다
           </p>
 
-          {/* Demo Mode Notice */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-700">
-              💡 데모 모드: 클릭하면 바로 대시보드로 이동합니다
-            </p>
-          </div>
+          {/* Configuration Warning */}
+          {!NAVER_CLIENT_ID && (
+            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-md">
+              <p className="text-sm text-error-700 font-semibold">
+                ⚠️ 네이버 OAuth가 설정되지 않았습니다
+              </p>
+              <p className="text-xs text-error-600 mt-1">
+                .env.local 파일을 생성하고 환경 변수를 설정하세요.
+              </p>
+            </div>
+          )}
 
           {/* Naver Login Button */}
           <Button
@@ -51,17 +71,13 @@ export default function LoginPage() {
             loading={loading}
             onClick={handleNaverLogin}
             className="mb-4 bg-[#03C75A] hover:bg-[#02b350]"
+            disabled={!NAVER_CLIENT_ID}
           >
             <div className="flex items-center justify-center gap-3">
               <span className="text-2xl font-bold">N</span>
-              <span>네이버로 계속하기 (데모)</span>
+              <span>네이버로 로그인</span>
             </div>
           </Button>
-
-          {/* Info Text */}
-          <p className="text-xs text-gray-500 text-center mt-6">
-            실제 네이버 로그인을 사용하려면 환경 변수를 설정하세요
-          </p>
         </div>
 
         {/* Features */}

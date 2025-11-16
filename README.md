@@ -74,9 +74,8 @@
 - **Tailwind CSS 3.4** - 유틸리티 CSS
 - **React Hooks** - 상태 관리
 
-### Mobile Wrapper
-- **React Native 0.73** - 네이티브 앱 래퍼
-- **react-native-webview** - WebView 컴포넌트
+### Mobile (배포용)
+- **React Native** - Android WebView 래퍼 (배포 시에만 사용)
 
 ### Backend & Services
 - **Supabase**
@@ -176,19 +175,19 @@ BlogTwin/
 ### 빠른 시작
 
 ```bash
-# 1. 웹앱 개발 서버 실행
+# 개발 환경 - 웹 개발만
 cd web
+npm install
 npm run dev
 
-# 2. Android 앱 실행 (새 터미널)
-npm start              # Metro 번들러
-npm run android        # Android 앱
-
-# 3. 웹 브라우저에서도 테스트 가능
+# 브라우저에서 테스트
 # http://localhost:3002
+
+# 또는 루트에서 실행
+npm run dev
 ```
 
-👉 상세 가이드: [WEBVIEW_GUIDE.md](./WEBVIEW_GUIDE.md)
+👉 배포 가이드: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ---
 

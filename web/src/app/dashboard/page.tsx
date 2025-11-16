@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingOverlay } from '@/components/ui/LoadingSpinner';
 import { supabase, isSupabaseConfigured, type BlogPost } from '@/lib/supabase';
+import { blogPostService } from '@/lib/supabase-service';
 
 interface BlogInfo {
   platform: string;
@@ -15,65 +16,64 @@ interface BlogInfo {
   lastSyncAt: Date | null;
 }
 
+// Temporary user ID (in real app, get from session)
+const TEMP_USER_ID = 'temp-user-id';
+
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [blogInfo, setBlogInfo] = useState<BlogInfo | null>(null);
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     initializePage();
   }, []);
 
   const initializePage = async () => {
-    // Always use mock data for demo
-    loadMockData();
+    setLoading(true);
+
+    if (!isSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
+    // Load real data from Supabase
+    await loadRealData();
+    setLoading(false);
   };
 
-  const loadMockData = () => {
-    setLoading(false);
-    setBlogInfo({
-      platform: 'naver',
-      analyzedPostCount: 28,
-      lastSyncAt: new Date(),
-    });
-    setRecentPosts([
-      {
-        id: '1',
-        user_id: 'demo',
-        title: '제주도 여행 후기',
-        content: '제주도 여행이 정말 좋았어요!',
-        status: 'draft',
+  const loadRealData = async () => {
+    // In real app, get user_id from session
+    const userId = TEMP_USER_ID;
+
+    // Fetch recent posts
+    const posts = await blogPostService.getUserPosts(userId);
+    setRecentPosts(posts.slice(0, 3)); // Show only 3 most recent
+
+    // Check if blog is connected (has posts)
+    setIsConnected(posts.length > 0);
+
+    if (posts.length > 0) {
+      setBlogInfo({
         platform: 'naver',
-        category: '여행',
-        tags: ['#제주도', '#여행'],
-        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        published_at: null,
-      },
-      {
-        id: '2',
-        user_id: 'demo',
-        title: '맛집 리뷰: 성수동 카페',
-        content: '성수동의 숨은 카페를 발견했습니다.',
-        status: 'published',
-        platform: 'naver',
-        category: '맛집',
-        tags: ['#성수동', '#카페'],
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        published_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ]);
+        analyzedPostCount: posts.length,
+        lastSyncAt: new Date(),
+      });
+    }
   };
 
   const handleSync = async () => {
     setSyncing(true);
+    await loadRealData();
     setTimeout(() => {
       setSyncing(false);
-      loadMockData();
     }, 2000);
+  };
+
+  const handleConnectBlog = () => {
+    router.push('/blog-connect');
   };
 
   if (loading) {
@@ -92,59 +92,131 @@ export default function DashboardPage() {
       <div className="screen-padding">
         {/* Supabase Warning */}
         {!isSupabaseConfigured() && (
-          <div className="mb-4 p-3 bg-warning-50 border border-warning-200 rounded-md">
-            <p className="text-sm text-warning-700">
-              ⚠️ 데모 모드로 실행 중입니다. 실제 데이터를 사용하려면 환경 변수를 설정하세요.
+          <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-md">
+            <p className="text-sm text-error-700 font-semibold">
+              ⚠️ Supabase가 설정되지 않았습니다
+            </p>
+            <p className="text-xs text-error-600 mt-1">
+              SUPABASE_INTEGRATION_GUIDE.md를 참고하여 환경 변수를 설정하세요.
             </p>
           </div>
         )}
 
         {/* Blog Info Card */}
         <Card variant="elevated" className="mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-gray-600 mb-1">
-                연동된 블로그: <span className="font-semibold text-gray-900">
-                  {blogInfo?.platform === 'naver' ? '네이버 블로그' : '티스토리'}
-                </span>
-              </p>
-              <p className="text-sm text-gray-600 mb-1">
-                📊 분석된 글: <span className="font-semibold">{blogInfo?.analyzedPostCount}개</span>
-              </p>
-              <p className="text-sm text-gray-600">
-                🕐 마지막 동기화: <span className="font-semibold">
-                  {blogInfo?.lastSyncAt ? '방금 전' : '-'}
-                </span>
-              </p>
+          {isConnected ? (
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 mb-1">
+                  연동된 블로그: <span className="font-semibold text-gray-900">
+                    {blogInfo?.platform === 'naver' ? '네이버 블로그' : '티스토리'}
+                  </span>
+                </p>
+                <p className="text-sm text-gray-600 mb-1">
+                  📊 분석된 글: <span className="font-semibold">{blogInfo?.analyzedPostCount}개</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  🕐 마지막 동기화: <span className="font-semibold">
+                    {blogInfo?.lastSyncAt ? '방금 전' : '-'}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="text-2xl hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
+              >
+                {syncing ? (
+                  <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  '🔄'
+                )}
+              </button>
             </div>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="text-2xl hover:scale-110 active:scale-95 transition-transform disabled:opacity-50"
-            >
-              {syncing ? (
-                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                '🔄'
-              )}
-            </button>
-          </div>
+          ) : (
+            <div className="text-center py-4">
+              <div className="text-4xl mb-3">🔗</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                블로그를 연동해주세요
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                네이버 블로그를 연동하면<br />
+                AI가 당신의 스타일을 학습합니다
+              </p>
+              <Button
+                variant="primary"
+                size="medium"
+                onClick={handleConnectBlog}
+              >
+                블로그 연동하기
+              </Button>
+            </div>
+          )}
         </Card>
 
         {/* Action Cards */}
         <div className="grid gap-4 mb-6">
-          <ActionCard
-            icon="✍️"
-            title="카테고리별 글 작성"
-            subtitle="주제를 입력하고 AI가 글을 작성합니다"
+          <Card
             onClick={() => router.push('/create/category')}
-          />
-          <ActionCard
-            icon="📸"
-            title="사진으로 포스팅"
-            subtitle="사진만 올리면 자동으로 글이 작성됩니다"
+            variant="elevated"
+            className="cursor-pointer hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">✍️</div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 mb-1">카테고리별 글 작성</h3>
+                <p className="text-sm text-gray-600 mb-3">주제를 입력하고 AI가 글을 작성합니다</p>
+
+                {/* Examples */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs px-2 py-1 bg-primary-50 text-primary-600 rounded-full">
+                    여행 후기
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-primary-50 text-primary-600 rounded-full">
+                    맛집 리뷰
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-primary-50 text-primary-600 rounded-full">
+                    일상 이야기
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-primary-50 text-primary-600 rounded-full">
+                    제품 리뷰
+                  </span>
+                </div>
+              </div>
+              <div className="text-gray-400 text-xl">→</div>
+            </div>
+          </Card>
+
+          <Card
             onClick={() => router.push('/create/photo')}
-          />
+            variant="elevated"
+            className="cursor-pointer hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">📸</div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 mb-1">사진으로 포스팅</h3>
+                <p className="text-sm text-gray-600 mb-3">사진만 올리면 자동으로 글이 작성됩니다</p>
+
+                {/* Examples */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs px-2 py-1 bg-success-50 text-success-600 rounded-full">
+                    카페 사진
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-success-50 text-success-600 rounded-full">
+                    음식 사진
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-success-50 text-success-600 rounded-full">
+                    여행 사진
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-success-50 text-success-600 rounded-full">
+                    제품 사진
+                  </span>
+                </div>
+              </div>
+              <div className="text-gray-400 text-xl">→</div>
+            </div>
+          </Card>
         </div>
 
         {/* Recent Posts */}

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingOverlay } from '@/components/ui/LoadingSpinner';
 import { supabase } from '@/lib/supabase';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +16,10 @@ export default function AuthCallbackPage() {
 
   const handleCallback = async () => {
     try {
+      if (!supabase) {
+        throw new Error('Supabase is not configured');
+      }
+
       const code = searchParams?.get('code');
       const state = searchParams?.get('state');
       const storedState = sessionStorage.getItem('oauth_state');
@@ -90,4 +94,12 @@ export default function AuthCallbackPage() {
   }
 
   return <LoadingOverlay message="로그인 처리 중..." />;
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<LoadingOverlay message="로그인 처리 중..." />}>
+      <AuthCallbackContent />
+    </Suspense>
+  );
 }

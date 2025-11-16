@@ -50,11 +50,27 @@ export default function BlogConnectPage() {
   };
 
   const connectNaverBlog = async () => {
-    // Simulate OAuth flow
-    setTimeout(async () => {
+    // Naver Blog uses Naver OAuth (same as login)
+    // After getting access token, we can fetch blog posts
+
+    const NAVER_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
+
+    if (!NAVER_CLIENT_ID) {
+      setError('네이버 OAuth 설정이 필요합니다. .env.local 파일을 확인하세요.');
       setConnecting(false);
-      await fetchBlogPosts('naver');
-    }, 1500);
+      return;
+    }
+
+    // Generate state for OAuth
+    const state = Math.random().toString(36).substring(7);
+    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_type', 'blog_connect'); // Distinguish from login
+
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+
+    // Redirect to Naver OAuth
+    window.location.href = naverAuthUrl;
   };
 
   const connectTistory = async () => {
@@ -130,19 +146,21 @@ export default function BlogConnectPage() {
 
             <div className="space-y-4 mb-8">
               <PlatformCard
-                platform="tistory"
-                name="티스토리"
-                icon="🅣"
-                color="bg-[#FF6B00]"
-                onClick={() => handleConnect('tistory')}
-              />
-
-              <PlatformCard
                 platform="naver"
                 name="네이버 블로그"
                 icon="N"
                 color="bg-[#03C75A]"
                 onClick={() => handleConnect('naver')}
+                disabled={false}
+              />
+
+              <PlatformCard
+                platform="tistory"
+                name="티스토리"
+                icon="🅣"
+                color="bg-[#FF6B00]"
+                onClick={() => handleConnect('tistory')}
+                disabled={true}
               />
             </div>
 
@@ -212,6 +230,7 @@ interface PlatformCardProps {
   icon: string;
   color: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const PlatformCard: React.FC<PlatformCardProps> = ({
@@ -220,17 +239,27 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
   icon,
   color,
   onClick,
+  disabled = false,
 }) => {
   return (
-    <Card onClick={onClick} variant="elevated">
+    <Card
+      onClick={disabled ? undefined : onClick}
+      variant="elevated"
+      className={disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+    >
       <div className="flex items-center gap-4">
-        <div className={`${color} text-white text-2xl font-bold w-12 h-12 rounded-lg flex items-center justify-center`}>
+        <div className={`${color} text-white text-2xl font-bold w-12 h-12 rounded-lg flex items-center justify-center ${disabled ? 'opacity-50' : ''}`}>
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+          <h3 className={`text-lg font-semibold ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
+            {name}
+          </h3>
+          {disabled && (
+            <p className="text-xs text-gray-400 mt-1">준비중입니다</p>
+          )}
         </div>
-        <div className="text-gray-400 text-xl">→</div>
+        <div className={`text-xl ${disabled ? 'text-gray-300' : 'text-gray-400'}`}>→</div>
       </div>
     </Card>
   );

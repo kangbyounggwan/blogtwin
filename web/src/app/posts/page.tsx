@@ -6,72 +6,46 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card } from '@/components/ui/Card';
 import { type BlogPost } from '@/lib/supabase';
+import { blogPostService } from '@/lib/supabase-service';
 
 type FilterType = 'all' | 'draft' | 'published';
+
+// Mock user ID (in real app, get from session)
+const TEMP_USER_ID = 'temp-user-id';
 
 export default function MyPostsPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterType>('all');
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPosts();
   }, [filter]);
 
-  const loadPosts = () => {
-    // Mock data
-    const allPosts: BlogPost[] = [
-      {
-        id: '1',
-        user_id: 'demo',
-        title: '제주도 여행 후기',
-        content: '제주도 여행이 정말 좋았어요!',
-        status: 'draft',
-        platform: 'naver',
-        category: '여행',
-        tags: ['#제주도', '#여행'],
-        created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        published_at: null,
-      },
-      {
-        id: '2',
-        user_id: 'demo',
-        title: '맛집 리뷰: 성수동 카페',
-        content: '성수동의 숨은 카페를 발견했습니다.',
-        status: 'published',
-        platform: 'naver',
-        category: '맛집',
-        tags: ['#성수동', '#카페'],
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        published_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '3',
-        user_id: 'demo',
-        title: 'AI가 작성한 첫 글',
-        content: 'BlogTwin으로 만든 첫 글입니다',
-        status: 'published',
-        platform: 'naver',
-        category: '일상',
-        tags: ['#AI', '#블로그'],
-        created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-        published_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+  const loadPosts = async () => {
+    setLoading(true);
 
-    const filtered = filter === 'all'
-      ? allPosts
-      : allPosts.filter(post => post.status === filter);
+    // In real app, get user_id from session
+    const userId = TEMP_USER_ID;
 
-    setPosts(filtered);
+    if (filter === 'all') {
+      const allPosts = await blogPostService.getUserPosts(userId);
+      setPosts(allPosts);
+    } else {
+      const filteredPosts = await blogPostService.getPostsByStatus(userId, filter);
+      setPosts(filteredPosts);
+    }
+
+    setLoading(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      setPosts(posts.filter(p => p.id !== id));
+      const success = await blogPostService.deletePost(id);
+      if (success) {
+        setPosts(posts.filter(p => p.id !== id));
+      }
     }
   };
 

@@ -10,7 +10,9 @@ export const isSupabaseConfigured = () => {
     supabaseAnonKey &&
     supabaseUrl !== '' &&
     supabaseAnonKey !== '' &&
-    supabaseUrl.startsWith('http')
+    supabaseUrl.startsWith('http') &&
+    !supabaseUrl.includes('your') &&
+    !supabaseAnonKey.includes('your')
   );
 };
 
